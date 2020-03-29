@@ -15,9 +15,9 @@ library(lubridate)
 library(reshape2)
 library(ggplot2)
 library(plotly)
-#read in the JH data
-#jh.cases <- read_csv("https://coviddata.github.io/covid-api/v1/places/cases.csv")
-# having trouble loading from the webpage. Currently need to download to the local directory
+source("./fxns/plot_cases.r")
+source("./fxns/est_exp_g.r")
+
 nyt.cases <- read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv")
 mt.cases <- nyt.cases %>% filter(state == "Montana") %>% 
   mutate(county = as.factor(county))
@@ -39,52 +39,45 @@ ggplot(dat.cur, aes(x = fct_reorder(county, cases, .desc = T), y = cases)) +
 ```
 
 Plot of the cases by county in Montana, but skip the zeros for now.
+
 ```{r co-plot}
 dat <- mt.cases %>% filter(cases > 0)
 
-p <- ggplot(dat, aes(x = date, y = cases, color = county)) + 
-  geom_line() +
-  labs(x = "Date", y = "Cases") + theme_bw() + theme(legend.position="none") 
-
-
-ggplotly(p, dynamicTicks = T)
+plot_cases(mt.cases, cutoff = 1, date.scaled = F, log.scaled = F)
 ```
 
-And on a log scale
-Need to rescale this so that all start on the first day they have x cases. For now let's start at 2 cases. 
+Plot it ag but rescaled to a log y axis and starting on the first day since 2 cases.
 
 ```{r rescale}
-dat3 <- mt.cases %>% filter(cases > 1)
-dat3 <- dat3[order(dat3$county, dat3$date),]
-dat3$county <- as.character(dat3$county)
-
-co <- unique(dat3$county)
-dat3$day <- 1
-
-for (i in 1:length(co)){
-  tmprows <- which(dat3$county == co[i])
-  n.days <- as.numeric(max(dat3$date[tmprows]) - min(dat3$date[tmprows]) + 1)
-  dat3$day[tmprows] <- seq(1, n.days, 1)
-}
-
-maxday <- max(dat3$day)
-dat2 <- data.frame(day = seq(from = 1, to = maxday, by = 1),
-                   c.2 = 2*1.41421 ^ seq(1, maxday, 1),
-                   c.4 = 2*1.18921 ^ seq(1, maxday, 1),
-                   c.6 = 2*1.12246 ^ seq(1, maxday, 1)) %>% melt(id = "day")
-names(dat2) <- c("day", "Td", "cases")
-dat2$Td <- as.numeric(dat2$Td)*2
-
-#plot
-p.log2 <- ggplot(dat3, aes(x = day, y = cases, color = county)) + 
-  geom_line() +
-  geom_line(dat2, mapping = aes(x = day, y = cases, color = as.factor(Td)), 
-            linetype = "dotted") + 
-  scale_y_continuous(trans = 'log10') + 
-  labs(x = "Day", y = "Log cases") + theme_bw() + theme(legend.position="none")  
-
-ggplotly(p.log2, dynamicTicks = T)
+plot_cases(mt.cases, cutoff = 2, date.scaled = T, log.scaled = T)
 
 ```
 
+Now estimate the exponential growth rates by county.
 
+```{r estgrowth}
+# estimate growth rates
+out <- est_exp_g(mt.cases, cutoff = 3)
+r.est <- out$params %>% filter(term == "day") %>% 
+  select(county, estimate, std.error)
+
+# calculate the doubling time. (need a double check)  
+r.est$t.double <- round(log(2) / log(1 + r.est$estimate), 1)
+r.est$lo <- round(log(2) / log(1 + r.est$estimate - 1.96*r.est$std.error),1)
+r.est$hi <- round(log(2) / log(1 + r.est$estimate + 1.96*r.est$std.error),1)
+table <- r.est  %>% filter(estimate >0) %>% select(county, t.double, lo, hi)
+table
+```
+
+Show the plot of these estimates. Not sure if I should be forcing the intercept on these. 
+
+```{r plotestgrowth}
+p <- ggplot(out$aug.dat, aes(day, cases, color = county)) + 
+  geom_point() + 
+  geom_line(aes(x = day, y = fit.cases, color = county)) + 
+  theme_bw() + theme(legend.position="none")  
+
+ggplotly(p, dynamicTicks = T) 
+```
+
+```
