@@ -9,6 +9,8 @@ First load in the data.  Currently have to download the NyTimes county level dat
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = F)
 library(tidyverse)
+library(magrittr)
+library(broom)
 library(lubridate)
 library(reshape2)
 library(ggplot2)
