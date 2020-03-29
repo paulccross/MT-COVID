@@ -25,6 +25,8 @@ est_exp_g <- function(case.data, cutoff){
   dat2 <- dat1 %>% filter(county %in% keep) # only those above the cutoff
   
   # run the log liner model
+  # NOTE: note sure whether to force it through the origin. 
+  
   aug.dat <- dat2 %>% 
     group_by(county) %>% 
     do(fit = lm(log(cases) ~ day, data = .)) %>% 
