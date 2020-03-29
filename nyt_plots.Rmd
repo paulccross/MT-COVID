@@ -16,7 +16,7 @@ library(plotly)
 #read in the JH data
 #jh.cases <- read_csv("https://coviddata.github.io/covid-api/v1/places/cases.csv")
 # having trouble loading from the webpage. Currently need to download to the local directory
-nyt.cases <- read_csv("./us-counties.csv")
+nyt.cases <- read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv")
 mt.cases <- nyt.cases %>% filter(state == "Montana") %>% 
   mutate(county = as.factor(county))
 ```
