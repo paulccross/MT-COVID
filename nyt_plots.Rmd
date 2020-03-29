@@ -29,6 +29,7 @@ summary(mt.cases)
 ```
 
 The current # of cases by county are: 
+
 ```{r current}
 dat.cur <- mt.cases %>% filter(date == max(date)) %>% select(county, cases, deaths)
 
