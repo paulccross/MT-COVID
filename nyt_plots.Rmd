@@ -14,7 +14,7 @@ library(reshape2)
 library(ggplot2)
 library(plotly)
 #read in the JH data
-jh.cases <- read_csv("https://coviddata.github.io/covid-api/v1/places/cases.csv")
+#jh.cases <- read_csv("https://coviddata.github.io/covid-api/v1/places/cases.csv")
 # having trouble loading from the webpage. Currently need to download to the local directory
 nyt.cases <- read_csv("./us-counties.csv")
 mt.cases <- nyt.cases %>% filter(state == "Montana") %>% 
@@ -48,28 +48,41 @@ p <- ggplot(dat, aes(x = date, y = cases, color = county)) +
 ggplotly(p, dynamicTicks = T)
 ```
 
-And on a log scale:  
-```{r co-plot-log}
-# for predicted growth rates
-first.day <- min(dat$date)
-last.day <- max(dat$date) + 3
-n.days = as.numeric(last.day - first.day + 1)
+And on a log scale
+Need to rescale this so that all start on the first day they have x cases. For now let's start at 2 cases. 
 
-dat2 <- data.frame(date = seq(from = first.day, to = last.day, by = 1),
-                   c.2 = 1.41421 ^ seq(1, n.days, 1),
-                   c.4 = 1.18921 ^ seq(1, n.days, 1),
-                   c.6 = 1.12246 ^ seq(1, n.days, 1)) %>% melt(id = "date")
-names(dat2) <- c("date", "Td", "cases")
+```{r rescale}
+dat3 <- mt.cases %>% filter(cases > 1)
+dat3 <- dat3[order(dat3$county, dat3$date),]
+dat3$county <- as.character(dat3$county)
+
+co <- unique(dat3$county)
+dat3$day <- 1
+
+for (i in 1:length(co)){
+  tmprows <- which(dat3$county == co[i])
+  n.days <- as.numeric(max(dat3$date[tmprows]) - min(dat3$date[tmprows]) + 1)
+  dat3$day[tmprows] <- seq(1, n.days, 1)
+}
+
+maxday <- max(dat3$day)
+dat2 <- data.frame(day = seq(from = 1, to = maxday, by = 1),
+                   c.2 = 2*1.41421 ^ seq(1, maxday, 1),
+                   c.4 = 2*1.18921 ^ seq(1, maxday, 1),
+                   c.6 = 2*1.12246 ^ seq(1, maxday, 1)) %>% melt(id = "day")
+names(dat2) <- c("day", "Td", "cases")
 dat2$Td <- as.numeric(dat2$Td)*2
 
 #plot
-p.log <- ggplot(dat, aes(x = date, y = cases, color = county)) + 
+p.log2 <- ggplot(dat3, aes(x = day, y = cases, color = county)) + 
   geom_line() +
- # geom_line(dat2, mapping = aes(x = date, y = cases, color = as.factor(Td)), 
- #            linetype = "dotted") + 
+  geom_line(dat2, mapping = aes(x = day, y = cases, color = as.factor(Td)), 
+            linetype = "dotted") + 
   scale_y_continuous(trans = 'log10') + 
-  labs(x = "Date", y = "Log cases") + theme_bw() + theme(legend.position="none")  
+  labs(x = "Day", y = "Log cases") + theme_bw() + theme(legend.position="none")  
 
-ggplotly(p.log, dynamicTicks = T)
+ggplotly(p.log2, dynamicTicks = T)
 
 ```
+
+
