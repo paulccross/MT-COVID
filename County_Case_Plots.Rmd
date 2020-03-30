@@ -39,7 +39,7 @@ ggplot(dat.cur, aes(x = fct_reorder(county, cases, .desc = T), y = cases)) +
 
 ```
 
-Plot of the cases by county in Montana, but skip the zeros for now.
+Plot of the cases by county in Montana, but skip the zeros for now. If you scroll over the points it will provide details about the county and number of cases. 
 
 ```{r co-plot}
 dat <- mt.cases %>% filter(cases > 0)
@@ -47,7 +47,7 @@ dat <- mt.cases %>% filter(cases > 0)
 plot_cases(mt.cases, cutoff = 1, date.scaled = F, log.scaled = F)
 ```
 
-Plot it ag but rescaled to a log y axis and starting on the first day since 2 cases.
+Plot it again but rescaled to a log axis and starting on the first day since 2 cases.
 
 ```{r rescale}
 plot_cases(mt.cases, cutoff = 2, date.scaled = T, log.scaled = T)
@@ -71,7 +71,7 @@ table$hi[table$hi<0] <- NA #assuming a normal error here doesn't work.
 table
 ```
 
-Show the plot of these estimates. Not sure if I should be forcing the intercept on these. 
+Show the plot of these estimated growth curves. 
 
 ```{r plotestgrowth}
 p <- ggplot(out$aug.dat, aes(day, cases, color = county)) + 
@@ -80,6 +80,4 @@ p <- ggplot(out$aug.dat, aes(day, cases, color = county)) +
   theme_bw() + theme(legend.position="none")  
 
 ggplotly(p, dynamicTicks = T) 
-```
-
 ```
