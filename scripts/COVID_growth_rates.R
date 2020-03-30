@@ -7,6 +7,7 @@ library(ggplot2)
 library(magrittr)
 library(ggpubr)
 library(HistDAWass)
+####PC: not everything working here. 
 
 X <- readRDS('data/JH_CSSE_COVID_dataset_clean')
 countries <- c('China','Cruise Ship','Iran','Italy','France','Spain','Germany','Korea, South',
@@ -72,7 +73,7 @@ CountryGrowthRates=sapply(countries_w_exp_growth,
 CountryGrowthRates <- rbind(CountryGrowthRates,log(2)/CountryGrowthRates['GrowthDate',])
 rownames(CountryGrowthRates)[3] <- 'DoublingTime'
 
-saveRDS(CountryGrowthRates,'RDS/Country_growth_rates')
+saveRDS(CountryGrowthRates,'data/Country_growth_rates')
 
 
 
@@ -130,7 +131,7 @@ ggsave('figures/Growth_rate_comparison.png',width=8,height=8,units='in')
 # We'll trim countries to the time-periods when they exhibit similar rates of growth
 
 ### Countries used:
-X <- readRDS('RDS/JH_CSSE_COVID_dataset_clean')
+X <- readRDS('data/JH_CSSE_COVID_dataset_clean')
 x <- X[,list(Confirmed=sum(Confirmed),
              Deaths=sum(deaths),
              NewCases=sum(NewCases)),by=c('country','date')]
@@ -170,7 +171,7 @@ coefs=sapply(unique(G$country),
 coefs <- rbind(coefs,log(2)/coefs['GrowthDate',])
 rownames(coefs)[3] <- 'DoublingTime'
 
-saveRDS(coefs,'RDS/Country_growth_rates_manual_curation_march_3')
+saveRDS(coefs,'data/Country_growth_rates_manual_curation_march_3')
 
 # Italy growth rates ------------------------------------------------------
 
@@ -203,3 +204,4 @@ g2=ggplot(X_italy,aes(data,terapia_intensiva))+
 
 ggarrange(g1,g2,nrow=1,ncol=2)
 ggsave('figures/Italy_deaths_and_ICU_vs_time.png',height=8,width=12,unit='in')
+

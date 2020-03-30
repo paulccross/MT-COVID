@@ -1,12 +1,16 @@
 # estimate the exponential growth rate by county
-est_exp_g <- function(case.data, cutoff){
+# uses the nls function rather than lm of the log. 
+###NOT WORKING####
+
+est_exp_g2 <- function(case.data, cutoff){
   # cases is a dataframe of cases with columns: date, county, cases
   # cutoff = remove counties with less the X rows
   # note this should be for only one county
   # returns a list with a dataframe of predictions and parameters
-  require(broom)
+  
   require(magrittr)
   require(tidyverse)
+  
   
   dat1 <- case.data %>% arrange(county, date)
   dat1$county <- as.character(dat1$county)
@@ -23,19 +27,20 @@ est_exp_g <- function(case.data, cutoff){
   keep <- co.days$county[which(co.days$n >= cutoff)] # remove these
   
   dat2 <- dat1 %>% filter(county %in% keep) # only those above the cutoff
-  
+  browser()
   # run the log liner model
   # NOTE: note sure whether to force it through the origin. 
-  
   aug.dat <- dat2 %>% 
     group_by(county) %>% 
-    do(fit = lm(log(cases) ~ day, data = .)) %>% 
+    do(fit = nlsLM(cases ~ N * exp(r * day), star=list(r=0,N=1), 
+                   control = nls.lm.control(maxiter=1000)), data = .) %>% 
     augment(fit) %>% mutate(cases = exp(log.cases.), fit.cases = exp(.fitted), 
                             se.cases = exp(.se.fit))
   # do it again for the parameters
   params <- dat2 %>% 
     group_by(county) %>% 
-    do(tidy(lm(log(cases) ~ day, data = .)))
+    do(tidy(nlsLM(cases ~ N * exp(r * day), star=list(r=0,N=1), 
+                  control = nls.lm.control(maxiter=1000)), data = .))
 
   out <- list(aug.dat = aug.dat, params = params)
   return(out)

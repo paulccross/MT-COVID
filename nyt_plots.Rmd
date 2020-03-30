@@ -54,7 +54,7 @@ plot_cases(mt.cases, cutoff = 2, date.scaled = T, log.scaled = T)
 
 ```
 
-Now estimate the exponential growth rates by county.
+Now estimate the exponential growth rates by county and print the doubling times.
 
 ```{r estgrowth}
 # estimate growth rates
@@ -64,9 +64,10 @@ r.est <- out$params %>% filter(term == "day") %>%
 
 # calculate the doubling time. (need a double check)  
 r.est$t.double <- round(log(2) / log(1 + r.est$estimate), 1)
-r.est$lo <- round(log(2) / log(1 + r.est$estimate - 1.96*r.est$std.error),1)
-r.est$hi <- round(log(2) / log(1 + r.est$estimate + 1.96*r.est$std.error),1)
+r.est$lo <- round(log(2) / log(1 + r.est$estimate + 1.96*r.est$std.error),1)
+r.est$hi <- round(log(2) / log(1 + r.est$estimate - 1.96*r.est$std.error),1)
 table <- r.est  %>% filter(estimate >0) %>% select(county, t.double, lo, hi)
+table$hi[table$hi<0] <- NA #assuming a normal error here doesn't work. 
 table
 ```
 
