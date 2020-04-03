@@ -81,3 +81,13 @@ p <- ggplot(out$aug.dat, aes(day, cases, color = county)) +
 
 ggplotly(p, dynamicTicks = T) 
 ```
+
+
+```{r plotestgrowth_log}
+p <- ggplot(out$aug.dat, aes(day, cases, color = county)) + 
+  geom_point() +  scale_y_continuous(trans = 'log10') + 
+  geom_line(aes(x = day, y = fit.cases, color = county)) + 
+  theme_bw() + theme(legend.position="none")  
+
+ggplotly(p, dynamicTicks = T) 
+```

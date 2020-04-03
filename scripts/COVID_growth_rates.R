@@ -100,7 +100,7 @@ pred_China <- data.table('country'='China_SEIR Estimate',
                          'Crel'=exp(r_china*(xx-1))) 
 
 X[GrowthPhase==TRUE,Crel:=Confirmed/Confirmed[1],by=country]
-ggplot(X,aes(GrowthDate,Crel,color=country))+
+p <- ggplot(X,aes(GrowthDate,Crel,color=country))+
   geom_line()+
   geom_point(cex=2,pch=4)+
   geom_ribbon(data=pred,aes(ymax=y_max,ymin=y_min),alpha=0.2,col='black')+
@@ -110,6 +110,8 @@ ggplot(X,aes(GrowthDate,Crel,color=country))+
   scale_y_continuous(trans='log',breaks=c(2^(0:10)),name='Growth Relative to Initial Exp Phase Cases')+
   ggtitle('Growth Rates Across Countries')
 
+p
+ggplotly(p, dynamicTicks = T)
 
 ggsave('figures/Growth_rate_comparison.png',width=8,height=8,units='in')
 
@@ -168,6 +170,7 @@ top_countries[GrowthDate<0,GrowthDate:=NA]
 
 coefs=sapply(unique(G$country),
              FUN=function(c,G.=G) coef(glm(Confirmed~GrowthDate,data=top_countries[country==c],family=poisson)) )
+
 coefs <- rbind(coefs,log(2)/coefs['GrowthDate',])
 rownames(coefs)[3] <- 'DoublingTime'
 
