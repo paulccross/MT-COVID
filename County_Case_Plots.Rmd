@@ -16,6 +16,7 @@ library(reshape2)
 library(ggplot2)
 library(plotly)
 source("./fxns/plot_cases.r")
+source("./fxns/est_geo_g.r")
 source("./fxns/est_exp_g.r")
 
 nyt.cases <- read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv")
@@ -57,37 +58,36 @@ plot_cases(mt.cases, cutoff = 2, date.scaled = T, log.scaled = T)
 Now estimate the exponential growth rates by county and print the doubling times.
 
 ```{r estgrowth}
-# estimate growth rates
-out <- est_exp_g(mt.cases, cutoff = 3)
-r.est <- out$params %>% filter(term == "day") %>% 
-  select(county, estimate, std.error)
+# estimate geometric mean growth rates
+out <- est_geo_g(mt.cases, n.cutoff = 5, length.cutoff = 5)
 
-# calculate the doubling time. (need a double check)  
-r.est$t.double <- round(log(2) / log(1 + r.est$estimate), 1)
-r.est$lo <- round(log(2) / log(1 + r.est$estimate + 1.96*r.est$std.error),1)
-r.est$hi <- round(log(2) / log(1 + r.est$estimate - 1.96*r.est$std.error),1)
-table <- r.est  %>% filter(estimate >0) %>% select(county, t.double, lo, hi)
-table$hi[table$hi<0] <- NA #assuming a normal error here doesn't work. 
-table
+out$params
 ```
+
+
+Note that these are note well estimated early in the epidemic. 
+
+Need to pull in comparable counties, perhaps eastern WA. 
+
+NEED TO FIX THE STUFF BELOW: 
 
 Show the plot of these estimated growth curves. 
 
 ```{r plotestgrowth}
-p <- ggplot(out$aug.dat, aes(day, cases, color = county)) + 
-  geom_point() + 
-  geom_line(aes(x = day, y = fit.cases, color = county)) + 
-  theme_bw() + theme(legend.position="none")  
+#p <- ggplot(out$aug.dat, aes(day, cases, color = county)) + 
+#  geom_point() + 
+##  geom_line(aes(x = day, y = fit.cases, color = county)) + 
+#  theme_bw() + theme(legend.position="none")  
 
-ggplotly(p, dynamicTicks = T) 
+#ggplotly(p, dynamicTicks = T) 
 ```
 
 
 ```{r plotestgrowth_log}
-p <- ggplot(out$aug.dat, aes(day, cases, color = county)) + 
-  geom_point() +  scale_y_continuous(trans = 'log10') + 
-  geom_line(aes(x = day, y = fit.cases, color = county)) + 
-  theme_bw() + theme(legend.position="none")  
+#p <- ggplot(out$aug.dat, aes(day, cases, color = county)) + 
+#  geom_point() +  scale_y_continuous(trans = 'log10') + 
+#  geom_line(aes(x = day, y = fit.cases, color = county)) + 
+#  theme_bw() + theme(legend.position="none")  
 
-ggplotly(p, dynamicTicks = T) 
+#ggplotly(p, dynamicTicks = T) 
 ```
